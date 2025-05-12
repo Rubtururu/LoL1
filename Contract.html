@@ -1,0 +1,141 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+contract SmartStakingBNB {
+    address public owner;
+    uint256 public totalStaked;
+    uint256 public totalTreasury;
+    uint256 public lastGlobalUpdate;
+    uint256 constant DAY = 1 days;
+
+    struct User {
+        uint256 stakedAmount;
+        uint256 rewardDebt;
+        uint256 pendingRewards;
+        uint256 lastUpdate;
+    }
+
+    mapping(address => User) public users;
+    address[] public stakers;
+    mapping(address => bool) public hasStaked;
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not owner");
+        _;
+    }
+
+    constructor() {
+        owner = msg.sender;
+        lastGlobalUpdate = block.timestamp;
+    }
+
+    receive() external payable {
+        stake();
+    }
+
+    function stake() public payable {
+        require(msg.value > 0, "Must send BNB");
+
+        uint256 amount = msg.value;
+        uint256 toTreasury = (amount * 95) / 100;
+        uint256 userStake = (amount * 90) / 100;
+        uint256 toOwner = amount - toTreasury; // 5%
+
+        _updateUserDividends(msg.sender);
+
+        users[msg.sender].stakedAmount += userStake;
+        totalStaked += userStake;
+        totalTreasury += toTreasury;
+
+        if (!hasStaked[msg.sender]) {
+            stakers.push(msg.sender);
+            hasStaked[msg.sender] = true;
+        }
+
+        payable(owner).transfer(toOwner);
+    }
+
+    function withdrawStake() public {
+        _updateUserDividends(msg.sender);
+
+        User storage user = users[msg.sender];
+        uint256 amount = user.stakedAmount;
+        require(amount > 0, "Nothing to withdraw");
+
+        user.stakedAmount = 0;
+        totalStaked -= amount;
+        payable(msg.sender).transfer(amount);
+    }
+
+    function withdrawRewards() public {
+        _updateUserDividends(msg.sender);
+
+        uint256 reward = users[msg.sender].pendingRewards;
+        require(reward > 0, "No rewards");
+
+        users[msg.sender].pendingRewards = 0;
+        payable(msg.sender).transfer(reward);
+    }
+
+    function _updateUserDividends(address userAddr) internal {
+        User storage user = users[userAddr];
+
+        if (user.stakedAmount == 0) {
+            user.lastUpdate = block.timestamp;
+            return;
+        }
+
+        uint256 timeElapsed = block.timestamp - user.lastUpdate;
+        if (timeElapsed < DAY) return;
+
+        uint256 userShare = (user.stakedAmount * 1e18) / totalStaked;
+        uint256 daysPassed = timeElapsed / DAY;
+        uint256 dailyDividend = (totalTreasury * 3) / 100;
+
+        uint256 reward = (dailyDividend * daysPassed * userShare) / 1e18;
+        user.pendingRewards += reward;
+        user.lastUpdate = block.timestamp;
+    }
+
+    // === STATISTICS ===
+
+    function getUserDailyDividendEstimate(address userAddr) public view returns (uint256) {
+        if (totalStaked == 0) return 0;
+        uint256 dailyDividend = (totalTreasury * 3) / 100;
+        uint256 share = (users[userAddr].stakedAmount * 1e18) / totalStaked;
+        return (dailyDividend * share) / 1e18;
+    }
+
+    function getTotalDailyDividend() public view returns (uint256) {
+        return (totalTreasury * 3) / 100;
+    }
+
+    function getUserShare(address userAddr) public view returns (uint256) {
+        if (totalStaked == 0) return 0;
+        return (users[userAddr].stakedAmount * 1e18) / totalStaked; // scaled by 1e18
+    }
+
+    function getTimeUntilNextDistribution(address userAddr) public view returns (uint256) {
+        uint256 last = users[userAddr].lastUpdate;
+        if (last == 0) return 0;
+        uint256 elapsed = block.timestamp - last;
+        if (elapsed >= DAY) return 0;
+        return DAY - elapsed;
+    }
+
+    function getPendingRewards(address userAddr) public view returns (uint256) {
+        User storage user = users[userAddr];
+
+        if (user.stakedAmount == 0 || totalStaked == 0) return user.pendingRewards;
+
+        uint256 timeElapsed = block.timestamp - user.lastUpdate;
+        uint256 daysPassed = timeElapsed / DAY;
+        if (daysPassed == 0) return user.pendingRewards;
+
+        uint256 userShare = (user.stakedAmount * 1e18) / totalStaked;
+        uint256 dailyDividend = (totalTreasury * 3) / 100;
+        uint256 reward = (dailyDividend * daysPassed * userShare) / 1e18;
+
+        return user.pendingRewards + reward;
+    }
+}
