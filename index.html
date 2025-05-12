@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BNB Staking Dashboard</title>
-  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js" defer></script>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
   <style>
     :root {
@@ -15,6 +15,7 @@
       --light: #f0f8ff;
       --card: rgba(255, 255, 255, 0.05);
     }
+
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
@@ -22,6 +23,7 @@
       color: white;
       overflow-x: hidden;
     }
+
     header {
       padding: 20px;
       text-align: center;
@@ -31,6 +33,7 @@
       backdrop-filter: blur(8px);
       box-shadow: 0 4px 12px rgba(0,0,0,0.3);
     }
+
     main {
       max-width: 1000px;
       margin: 30px auto;
@@ -40,6 +43,16 @@
       backdrop-filter: blur(10px);
       box-shadow: 0 8px 30px rgba(0,0,0,0.3);
     }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+      color: var(--accent);
+    }
+
     button {
       background-color: var(--accent);
       border: none;
@@ -50,9 +63,11 @@
       cursor: pointer;
       transition: background 0.3s ease;
     }
+
     button:hover {
       background-color: var(--accent-dark);
     }
+
     input[type="number"] {
       padding: 10px;
       border-radius: 6px;
@@ -67,21 +82,23 @@
   </header>
 
   <main>
-    <button onclick="connect()">Conectar Wallet</button>
-    <div id="walletStatus"></div>
-
-    <div id="dashboard" style="display:none;">
+    <div class="section">
       <h2>Stake BNB</h2>
-      <input type="number" id="amount" placeholder="Enter amount" />
-      <button onclick="stakeBNB()">Stake</button>
+      <div class="card">
+        <label for="amount">Amount (BNB):</label>
+        <input type="number" id="amount" placeholder="Enter amount" />
+        <br /><br />
+        <button onclick="stakeBNB()">Stake</button>
+      </div>
+    </div>
 
+    <div class="section">
       <h2>Your Stats</h2>
-      <p>Staked Amount: <span id="userStaked">0 BNB</span></p>
-      <p>Pending Rewards: <span id="userPending">0 BNB</span></p>
-      <p>Daily Earnings Est.: <span id="userDaily">0 BNB</span></p>
-      <p>Time Until Next Payout: <span id="userTime">--</span></p>
-
-      <h2>Actions</h2>
+      <div>Staked Amount: <span id="userStaked">0 BNB</span></div>
+      <div>Pending Rewards: <span id="userPending">0 BNB</span></div>
+      <div>Daily Earnings Est.: <span id="userDaily">0 BNB</span></div>
+      <div>Time Until Next Payout: <span id="userTime">--</span></div>
+      <br />
       <button onclick="withdrawRewards()">Claim Rewards</button>
       <button onclick="withdrawStake()">Withdraw Stake</button>
     </div>
@@ -90,69 +107,49 @@
   <script>
     const contractAddress = "0x5f42DC4DBf6Ad557966CCd8a61f658B8e6b16CF5";
     const contractABI = [{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"userAddr","type":"address"}],"name":"getPendingRewards","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"userAddr","type":"address"}],"name":"getTimeUntilNextDistribution","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getTotalDailyDividend","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"userAddr","type":"address"}],"name":"getUserDailyDividendEstimate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"userAddr","type":"address"}],"name":"getUserShare","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"hasStaked","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"lastGlobalUpdate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"stake","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[{"internalType":"uint256","name":"","type":"uint256"}],"name":"stakers","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalStaked","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalTreasury","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"users","outputs":[{"internalType":"uint256","name":"stakedAmount","type":"uint256"},{"internalType":"uint256","name":"rewardDebt","type":"uint256"},{"internalType":"uint256","name":"pendingRewards","type":"uint256"},{"internalType":"uint256","name":"lastUpdate","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"withdrawRewards","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"withdrawStake","outputs":[],"stateMutability":"nonpayable","type":"function"},{"stateMutability":"payable","type":"receive"}]; // Inserta el ABI correcto aquí
+
     let provider, signer, contract;
 
     async function connect() {
-      try {
-        if (typeof window.ethereum !== 'undefined') {
-          provider = new ethers.providers.Web3Provider(window.ethereum);
-          await provider.send("eth_requestAccounts", []);
-          signer = provider.getSigner();
-          contract = new ethers.Contract(contractAddress, contractABI, signer);
-
-          document.getElementById("walletStatus").innerText = "Wallet conectada: " + await signer.getAddress();
-          document.getElementById("dashboard").style.display = "block";
-          loadStats();
-        } else {
-          alert("MetaMask no está instalado.");
-        }
-      } catch (error) {
-        console.error("Error al conectar:", error);
+      if (typeof window.ethereum !== 'undefined') {
+        provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        contract = new ethers.Contract(contractAddress, contractABI, signer);
+        loadStats();
+      } else {
+        alert("MetaMask no está instalado.");
       }
     }
 
     async function stakeBNB() {
-      try {
-        const amount = document.getElementById("amount").value;
-        if (!amount || isNaN(amount)) return alert("Enter a valid amount");
-        const tx = await contract.stake({ value: ethers.utils.parseEther(amount) });
-        await tx.wait();
-        loadStats();
-      } catch (error) {
-        console.error("Error al hacer stake:", error);
-      }
+      const amount = document.getElementById("amount").value;
+      if (!amount || isNaN(amount)) return alert("Enter a valid amount");
+      const tx = await contract.stake({ value: ethers.utils.parseEther(amount) });
+      await tx.wait();
+      loadStats();
     }
 
     async function withdrawRewards() {
-      try {
-        const tx = await contract.withdrawRewards();
-        await tx.wait();
-        loadStats();
-      } catch (error) {
-        console.error("Error al reclamar recompensas:", error);
-      }
+      const tx = await contract.withdrawRewards();
+      await tx.wait();
+      loadStats();
     }
 
     async function withdrawStake() {
-      try {
-        const tx = await contract.withdrawStake();
-        await tx.wait();
-        loadStats();
-      } catch (error) {
-        console.error("Error al retirar stake:", error);
-      }
+      const tx = await contract.withdrawStake();
+      await tx.wait();
+      loadStats();
     }
 
     async function loadStats() {
-      try {
-        const address = await signer.getAddress();
-        const userInfo = await contract.users(address);
-        document.getElementById("userStaked").innerText = `${ethers.utils.formatEther(userInfo.stakedAmount)} BNB`;
-        document.getElementById("userPending").innerText = `${ethers.utils.formatEther(userInfo.pendingRewards)} BNB`;
-      } catch (error) {
-        console.error("Error al cargar estadísticas:", error);
-      }
+      const address = await signer.getAddress();
+      const staked = await contract.users(address);
+      document.getElementById("userStaked").innerText = `${ethers.utils.formatEther(staked.stakedAmount)} BNB`;
+      document.getElementById("userPending").innerText = `${ethers.utils.formatEther(staked.pendingRewards)} BNB`;
     }
+
+    window.onload = connect;
   </script>
 </body>
 </html>
