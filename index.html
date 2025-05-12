@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BNB Staking Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #0f2027;
+      --bg-grad: linear-gradient(to right, #2c5364, #203a43, #0f2027);
+      --accent: #00c9a7;
+      --accent-dark: #008f7a;
+      --light: #f0f8ff;
+      --card: rgba(255, 255, 255, 0.05);
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg-grad);
+      color: white;
+      overflow-x: hidden;
+    }
+
+    header {
+      padding: 20px;
+      text-align: center;
+      font-size: 2rem;
+      font-weight: bold;
+      background-color: var(--card);
+      backdrop-filter: blur(8px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+    }
+
+    .section {
+      margin-bottom: 30px;
+    }
+
+    h2 {
+      margin-bottom: 15px;
+      color: var(--accent);
+    }
+
+    .card {
+      background-color: var(--card);
+      padding: 20px;
+      border-radius: 16px;
+      margin-bottom: 20px;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-5px);
+    }
+
+    .stats {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+
+    .stat {
+      flex: 1 1 45%;
+      padding: 10px;
+      background-color: rgba(255,255,255,0.05);
+      border-left: 4px solid var(--accent);
+      border-radius: 12px;
+    }
+
+    button {
+      background-color: var(--accent);
+      border: none;
+      color: white;
+      padding: 12px 24px;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background-color: var(--accent-dark);
+    }
+
+    input[type="number"] {
+      padding: 10px;
+      border-radius: 6px;
+      border: none;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    🌟 BNB Staking Dashboard 🌟
+  </header>
+
+  <main>
+    <div class="section">
+      <h2>Stake BNB</h2>
+      <div class="card">
+        <label for="amount">Amount (BNB):</label>
+        <input type="number" id="amount" placeholder="Enter amount" />
+        <br /><br />
+        <button onclick="stakeBNB()">Stake</button>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Your Stats</h2>
+      <div class="stats">
+        <div class="stat">Staked Amount: <span id="userStaked">0 BNB</span></div>
+        <div class="stat">Pending Rewards: <span id="userPending">0 BNB</span></div>
+        <div class="stat">Daily Earnings Est.: <span id="userDaily">0 BNB</span></div>
+        <div class="stat">Time Until Next Payout: <span id="userTime">--</span></div>
+      </div>
+      <br />
+      <button onclick="withdrawRewards()">Claim Rewards</button>
+      <button onclick="withdrawStake()">Withdraw Stake</button>
+    </div>
+
+    <div class="section">
+      <h2>Pool Stats</h2>
+      <div class="stats">
+        <div class="stat">Total Treasury: <span id="treasury">0 BNB</span></div>
+        <div class="stat">Total Staked: <span id="staked">0 BNB</span></div>
+        <div class="stat">Daily Distribution: <span id="daily">0 BNB</span></div>
+        <div class="stat">Your Share: <span id="userShare">0%</span></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const contractAddress = "YOUR_CONTRACT_ADDRESS_HERE";
+    const contractABI = [
+      // Add your contract ABI here
+    ];
+
+    let signer, contract;
+
+    async function connect() {
+      if (typeof window.ethereum !== 'undefined') {
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        signer = provider.getSigner();
+        contract = new ethers.Contract(contractAddress, contractABI, signer);
+        loadStats();
+      } else {
+        alert("Please install MetaMask");
+      }
+    }
+
+    async function stakeBNB() {
+      const amount = document.getElementById("amount").value;
+      if (!amount || isNaN(amount)) return alert("Enter a valid amount");
+      const tx = await contract.stake({ value: ethers.utils.parseEther(amount) });
+      await tx.wait();
+      loadStats();
+    }
+
+    async function withdrawRewards() {
+      const tx = await contract.withdrawRewards();
+      await tx.wait();
+      loadStats();
+    }
+
+    async function withdrawStake() {
+      const tx = await contract.withdrawStake();
+      await tx.wait();
+      loadStats();
+    }
+
+    async function loadStats() {
+      const address = await signer.getAddress();
+      const staked = await contract.users(address);
+      const pending = await contract.getPendingRewards(address);
+      const daily = await contract.getUserDailyDividendEstimate(address);
+      const treasury = await contract.totalTreasury();
+      const totalStaked = await contract.totalStaked();
+      const share = await contract.getUserShare(address);
+      const countdown = await contract.getTimeUntilNextDistribution(address);
+
+      document.getElementById("userStaked").innerText = `${ethers.utils.formatEther(staked.stakedAmount)} BNB`;
+      document.getElementById("userPending").innerText = `${ethers.utils.formatEther(pending)} BNB`;
+      document.getElementById("userDaily").innerText = `${ethers.utils.formatEther(daily)} BNB`;
+      document.getElementById("treasury").innerText = `${ethers.utils.formatEther(treasury)} BNB`;
+      document.getElementById("staked").innerText = `${ethers.utils.formatEther(totalStaked)} BNB`;
+      document.getElementById("daily").innerText = `${ethers.utils.formatEther(treasury.mul(3).div(100))} BNB`;
+      document.getElementById("userShare").innerText = `${(share / 1e16).toFixed(2)}%`;
+      document.getElementById("userTime").innerText = `${Math.floor(countdown / 60)} min`;
+    }
+
+    window.onload = connect;
+  </script>
+</body>
+</html>
