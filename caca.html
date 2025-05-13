@@ -1,27 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Test MetaMask</title>
+  <meta charset="UTF-8">
+  <title>MetaMask Conexión Moderna</title>
   <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
 </head>
 <body>
-  <h1>Conectar MetaMask</h1>
-  <button onclick="connect()">🔗 Conectar</button>
-  <p id="status">⏳ Estado: desconectado</p>
+  <h2>Conexión con MetaMask</h2>
+  <button id="connectButton">🔗 Conectar con MetaMask</button>
+  <p id="status">Estado: desconectado</p>
+  <p id="account">Cuenta: --</p>
+
   <script>
-    async function connect() {
+    let provider, signer;
+
+    async function conectarMetaMask() {
       try {
-        if (!window.ethereum) throw new Error("MetaMask no detectado");
-        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        if (!window.ethereum) {
+          document.getElementById("status").innerText = "MetaMask no está instalado.";
+          alert("❌ MetaMask no detectado. Instálalo para continuar.");
+          return;
+        }
+
+        provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+
+        // Solicita acceso a la cuenta
         await provider.send("eth_requestAccounts", []);
-        const signer = provider.getSigner();
-        const address = await signer.getAddress();
-        document.getElementById("status").innerText = "✅ Conectado: " + address;
-      } catch (err) {
-        console.error(err);
-        alert("❌ Error conectando con MetaMask. Mira la consola.");
+        signer = provider.getSigner();
+        const cuenta = await signer.getAddress();
+
+        document.getElementById("status").innerText = "✅ Conectado";
+        document.getElementById("account").innerText = "Cuenta: " + cuenta;
+        console.log("Cuenta conectada:", cuenta);
+
+      } catch (error) {
+        console.error("Error al conectar con MetaMask:", error);
+        alert("❌ Error al conectar con MetaMask. Revisa la consola.");
       }
     }
+
+    document.getElementById("connectButton").addEventListener("click", conectarMetaMask);
   </script>
 </body>
 </html>
