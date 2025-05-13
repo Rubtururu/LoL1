@@ -181,24 +181,25 @@
     }
 
     async function loadStats() {
-      const address = await signer.getAddress();
-      const staked = await contract.users(address);
-      const pending = await contract.getPendingRewards(address);
-      const daily = await contract.getUserDailyDividendEstimate(address);
-      const treasury = await contract.totalTreasury();
-      const totalStaked = await contract.totalStaked();
-      const share = await contract.getUserShare(address);
-      const countdown = await contract.getTimeUntilNextDistribution(address);
+  const address = await signer.getAddress();
+  const staked = await contract.users(address);
+  const pending = await contract.getPendingRewards(address);
+  const daily = await contract.getUserDailyDividendEstimate(address);
+  const treasury = await contract.totalTreasury();
+  const totalStaked = await contract.totalStaked();
+  const share = await contract.getUserShare(address);
+  const countdown = await contract.getTimeUntilNextDistribution(address);
 
-      document.getElementById("userStaked").innerText = ${ethers.utils.formatEther(staked.stakedAmount)} BNB;
-      document.getElementById("userPending").innerText = ${ethers.utils.formatEther(pending)} BNB;
-      document.getElementById("userDaily").innerText = ${ethers.utils.formatEther(daily)} BNB;
-      document.getElementById("treasury").innerText = ${ethers.utils.formatEther(treasury)} BNB;
-      document.getElementById("staked").innerText = ${ethers.utils.formatEther(totalStaked)} BNB;
-      document.getElementById("daily").innerText = ${ethers.utils.formatEther(treasury.mul(3).div(100))} BNB;
-      document.getElementById("userShare").innerText = ${(share / 1e16).toFixed(2)}%;
-      document.getElementById("userTime").innerText = ${Math.floor(countdown / 60)} min;
-    }
+  document.getElementById("userStaked").innerText = `${ethers.utils.formatEther(staked.stakedAmount)} BNB`;
+  document.getElementById("userPending").innerText = `${ethers.utils.formatEther(pending)} BNB`;
+  document.getElementById("userDaily").innerText = `${ethers.utils.formatEther(daily)} BNB`;
+  document.getElementById("treasury").innerText = `${ethers.utils.formatEther(treasury)} BNB`;
+  document.getElementById("staked").innerText = `${ethers.utils.formatEther(totalStaked)} BNB`;
+  document.getElementById("daily").innerText = `${ethers.utils.formatEther(treasury.mul(3).div(100))} BNB`;
+  document.getElementById("userShare").innerText = `${(share / 1e16).toFixed(2)}%`;
+  document.getElementById("userTime").innerText = `${Math.floor(countdown / 60)} min`;
+}
+
 
     window.onload = connect;
   </script>
