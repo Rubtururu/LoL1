@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Test MetaMask</title>
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  </head>
+  <body>
+    <h1>Conectar con MetaMask</h1>
+    <button onclick="connect()">🔌 Conectar</button>
+    <p id="status">Estado: desconectado</p>
+    <p>Cuenta: <span id="account">--</span></p>
+
+    <script>
+      let signer;
+
+      async function connect() {
+        try {
+          if (typeof window.ethereum !== 'undefined') {
+            const provider = new ethers.providers.Web3Provider(window.ethereum);
+            await provider.send("eth_requestAccounts", []);
+            signer = provider.getSigner();
+            const address = await signer.getAddress();
+            document.getElementById("status").innerText = "Estado: conectado ✅";
+            document.getElementById("account").innerText = address;
+            console.log("✅ Conectado:", address);
+          } else {
+            alert("MetaMask no está instalado");
+          }
+        } catch (err) {
+          console.error("Error conectando con MetaMask:", err);
+          alert("❌ Error conectando con MetaMask. Mira la consola.");
+        }
+      }
+    </script>
+  </body>
+</html>
