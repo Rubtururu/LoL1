@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Conectar con MetaMask</title>
+  <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 2rem; background: #f0f0f0; color: #333; }
+    button { padding: 10px 20px; font-size: 16px; }
+    .status { margin-top: 1rem; }
+  </style>
+</head>
+<body>
+  <h1>Conectar con MetaMask</h1>
+  <button onclick="connect()">馃攲 Conectar</button>
+  <div class="status">
+    <p><strong>Estado:</strong> <span id="status">desconectado</span></p>
+    <p><strong>Cuenta:</strong> <span id="account">--</span></p>
+  </div>
+
+  <script>
+    async function connect() {
+      try {
+        if (typeof window.ethereum === 'undefined') {
+          alert("鉂� MetaMask no est谩 instalado.");
+          return;
+        }
+
+        const provider = new ethers.providers.Web3Provider(window.ethereum);
+        await provider.send("eth_requestAccounts", []);
+        const signer = provider.getSigner();
+        const address = await signer.getAddress();
+
+        document.getElementById("status").innerText = "conectado 鉁�";
+        document.getElementById("account").innerText = address;
+        console.log("鉁� Conectado con:", address);
+      } catch (err) {
+        console.error("Error conectando con MetaMask:", err);
+        alert("鉂� Error conectando con MetaMask. Mira la consola.");
+      }
+    }
+  </script>
+</body>
+</html>
